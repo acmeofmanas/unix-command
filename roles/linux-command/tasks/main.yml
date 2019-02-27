@@ -1,36 +1,42 @@
----
 # tasks file for test
 - name: Create data Presto directory
-    file:
-        path: /opt/presto/data
-        state: directory
+  file:
+    path: /opt/presto/data
+    state: directory
+
 - name: Check service
-    service:
+  service:
       name: sshd
       state: started
 
-- name: check if the user exist
-    register: presto
-    raw: getent passwd {{presto}}
-    ignore_error: true
+#- name: check if the user exist
+#  register: presto
+#  raw: getent passwd {{presto}}
+#  ignore_error: true
 
--name : change password
- user:
+- name: echo register value
+  shell: echo "$presto"
+
+- name : change password
+  user:
    name: presto
    password: "{{'password123' | password_hash('sha512') }}"
 
 - name: create user if not present
-        user:
-          name: presto
-          comment: service user
-          uid: 2001
-          groups: presto
-- name: Register new directory
-  shell: ls -ltrh |awk {'print $NF'}
-  register: new_dir
+  user:
+   name: presto
+   comment: service user
+   uid: 2001
+   groups: presto
 
--name: create link to file
- file:
-   src: {{new_dir}}
+- name: Register new directory
+  register: new_dir
+  shell: ls -ltrh |awk {'print $NF'}
+
+- debug: msg="{{ new_dir.stdout }}"
+
+- name: create link to file
+  file:
+   src: "{{new_dir.stdout}}"
    dest: /opt/presto/presto-server
    state: link
